@@ -310,8 +310,9 @@ abstract class NepNep(
     override fun chapterListParse(response: Response): List<SChapter> {
         val vmChapters = response.asJsoup().select("script:containsData(MainFunction)").first()!!.data()
             .substringAfter("vm.Chapters = ").substringBefore(";")
-        return json.parseToJsonElement(vmChapters).jsonArray.map { json ->
+        return json.parseToJsonElement(vmChapters).jsonArray.reversed().mapIndexed() { index, json ->
             val indexChapter = json.getString("Chapter")!!
+            val adjustedIndex = index + 1
             SChapter.create().apply {
                 name = json.getString("ChapterName").let { if (it.isNullOrEmpty()) "${json.getString("Type")} ${chapterImage(indexChapter, true)}" else it }
                 url = "/read-online/" + response.request.url.toString().substringAfter("/manga/") + chapterURLEncode(indexChapter)
@@ -320,8 +321,9 @@ abstract class NepNep(
                 } catch (_: Exception) {
                     0L
                 }
+                chapter_number = adjustedIndex.toFloat()
             }
-        }
+        }.reversed()
     }
 
     // Pages
